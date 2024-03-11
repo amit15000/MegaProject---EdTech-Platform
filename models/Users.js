@@ -20,10 +20,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
-  phoneNumber: {
-    type: Number,
-    require: true,
-  },
   accountType: {
     type: String,
     enum: ("Student", "Instructor", "Admin"),
