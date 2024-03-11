@@ -12,4 +12,4 @@ const courseProgress = new mongoose.Schema({
     },
   ],
 });
-module.exports = mongoose.model("Profile", courseProgress);
+module.exports = mongoose.model("CourseProgress", courseProgress);
