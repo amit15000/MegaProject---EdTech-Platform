@@ -4,6 +4,8 @@ const User = require("../models/Users");
 const Users = require("../models/Users");
 const bcrypt = require("bcrypt");
 const Profile = require("../models/Profile");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 //send OTP
 exports.sendOTP = async (req, res) => {
   const { email } = req.body;
@@ -75,8 +77,8 @@ exports.signup = async (req, res) => {
 
     //check if user already exist
 
-    const existingUser = await Users.find({ email });
-    if (existingUser) {
+    const user = await Users.find({ email });
+    if (user) {
       return res.json({
         success: false,
         message: "User already exist",
@@ -137,4 +139,65 @@ exports.signup = async (req, res) => {
     });
   }
   //save to database
+};
+
+exports.login = async (req, res) => {
+  try {
+    //data fetch from form
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are compulsory",
+      });
+    }
+    //check if user not exist
+    const user = await User.find({ email });
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "SignUp before login",
+      });
+    }
+    //fetch pasword from the database
+
+    //user exists=>match password
+
+    if (await bcrypt.compare(password, user.password)) {
+      const payload = {
+        email: user.email,
+        id: user._id,
+        role: user.role,
+      };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "2hr",
+      });
+      //send cookie
+      user = user.toObject();
+      user = user.token;
+      user.password = undefined;
+      const options = {
+        expiresIn: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      };
+      res.cookie("token", token, options).json({
+        success: true,
+        token,
+        user,
+        message: "Logged in successfully",
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "Password Do Not Match",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: "Login failure, please try again",
+    });
+  }
 };
