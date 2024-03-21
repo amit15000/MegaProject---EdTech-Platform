@@ -63,12 +63,12 @@ exports.signup = async (req, res) => {
       firstName,
       lastName,
       password,
-      confirmPass,
+      confirmPassword,
       accountType,
       otp,
     } = req.body;
     //validation
-    if (!email || !firstName || !lastName || !password || !confirmPass) {
+    if (!email || !firstName || !lastName || !password || !confirmPassword) {
       return res.json({
         success: false,
         message: "All fields are to be filled",
@@ -77,8 +77,8 @@ exports.signup = async (req, res) => {
 
     //check if user already exist
 
-    const user = await Users.find({ email });
-    if (user) {
+    const existingUser = await Users.find({ email });
+    if (existingUser) {
       return res.json({
         success: false,
         message: "User already exist",
@@ -86,7 +86,7 @@ exports.signup = async (req, res) => {
     }
     //new user ---> check password mathcing
 
-    if (password != confirmPass) {
+    if (password != confirmPassword) {
       return res.json({
         success: false,
         message: "Password do not match",
@@ -200,4 +200,17 @@ exports.login = async (req, res) => {
       message: "Login failure, please try again",
     });
   }
+};
+exports.changePassword = async (req, res) => {
+  try {
+    //data fetch
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    //validation
+    //get user's details from the token
+    const { token } = req.req.cookies;
+    const decodeToken = jwt.decode(token);
+    const savePassword = await User.find({ _id: decodeToken.id });
+  } catch (error) {}
+
+  //check if passowrd matchs
 };
