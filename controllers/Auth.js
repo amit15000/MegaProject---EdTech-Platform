@@ -5,6 +5,7 @@ const Users = require("../models/Users");
 const bcrypt = require("bcrypt");
 const Profile = require("../models/Profile");
 const jwt = require("jsonwebtoken");
+const mailSender = require("../utils/mailSender");
 require("dotenv").config();
 //send OTP
 exports.sendOTP = async (req, res) => {
@@ -77,8 +78,8 @@ exports.signup = async (req, res) => {
 
     //check if user already exist
 
-    const existingUser = await Users.find({ email });
-    if (existingUser) {
+    const user = await Users.find({ email });
+    if (user) {
       return res.json({
         success: false,
         message: "User already exist",
@@ -116,7 +117,7 @@ exports.signup = async (req, res) => {
       contactNumber: null,
     });
 
-    const user = await User.create({
+    user = await User.create({
       firstName,
       lastName,
       email,
@@ -168,7 +169,7 @@ exports.login = async (req, res) => {
       const payload = {
         email: user.email,
         id: user._id,
-        role: user.role,
+        role: user.accountType,
       };
       const token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: "2hr",
@@ -206,11 +207,51 @@ exports.changePassword = async (req, res) => {
     //data fetch
     const { oldPassword, newPassword, confirmPassword } = req.body;
     //validation
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.json({
+        success: false,
+        message: "All fields are required.",
+      });
+    } else if (newPassword != confirmPassword) {
+      return res.json({
+        success: false,
+        message: "New Password and Confirm Password not matching",
+      });
+    }
+
     //get user's details from the token
     const { token } = req.req.cookies;
     const decodeToken = jwt.decode(token);
-    const savePassword = await User.find({ _id: decodeToken.id });
-  } catch (error) {}
+    const user = await User.find({ _id: decodeToken.id });
+    const savedPassword = user.password;
+    if (await bcrypt.compare(oldPassword, savedPassword)) {
+      const hashPassword = await bcrypt.hash(newPassword, 10);
+      await User.updateOne(
+        { _id: decodeToken._id },
+        { $set: { password: hashPassword } }
+      );
+      res.json({
+        success: true,
+        message: "Password updated successfully.",
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Previous Password not matching.",
+      });
+    }
 
-  //check if passowrd matchs
+    mailSender(
+      user.email,
+      "StudySphere Alert",
+      "Your password has been changed."
+    );
+
+    //send Mail
+  } catch (error) {}
+  console.error(error);
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error.",
+  });
 };
