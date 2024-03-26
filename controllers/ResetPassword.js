@@ -1,4 +1,5 @@
 const Users = require("../models/Users");
+const mailSender = require("../utils/mailSender");
 
 //reset Passwor Token
 exports.resetPasswordToken = async (req, res) => {
@@ -16,13 +17,30 @@ exports.resetPasswordToken = async (req, res) => {
         message: "Email not registered, Check your email",
       });
     }
-    //insert token and send mail
+    //update user with updated token and expiryTime
     const token = crypto.randomUUID();
     const updatedUser = await Users.findOneAndUpdate(
       { email: email },
       { token: token, resetPasswordToken: Date.now() * 5 * 60 * 1000 }
     );
-  } catch (error) {}
+
+    //send mail
+    const url = `http://localhost:3000/update-password/${token}`;
+    await mailSender(
+      email,
+      "Reset Password for StudySphere",
+      `Click to change your password : ${url}`
+    );
+    return res.status(200).json({
+      sucess: true,
+      message: "Email sent successfully, Please check your mail",
+    });
+  } catch (error) {
+    return res.status(200).json({
+      sucess: false,
+      message: "Error while sending Password Reset Link to mail",
+    });
+  }
 };
 
 //reset
