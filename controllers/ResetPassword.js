@@ -21,7 +21,7 @@ exports.resetPasswordToken = async (req, res) => {
     // generate a token
     const token = crypto.randomUUID();
     //add token  and expiry time to User model of that user
-    const updatedDetails = User.findOneAndUpdate(
+    const updatedDetails = Users.findOneAndUpdate(
       { email: email },
       {
         token: token,
@@ -65,7 +65,7 @@ exports.resetPassword = async (req, res) => {
         message: "Password not matching",
       });
     }
-    const userDetails = User.find({ token: token });
+    const userDetails = Users.find({ token: token });
     if (!userDetails) {
       return res.json({
         success: false,
