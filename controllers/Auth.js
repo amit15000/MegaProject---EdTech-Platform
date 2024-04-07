@@ -22,7 +22,7 @@ exports.sendOTP = async (req, res) => {
     }
 
     //new user--> generate otp
-    let newOTP = generate(6, {
+    let newOTP = generate(6, { 
       specialChars: false,
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,

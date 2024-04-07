@@ -65,7 +65,7 @@ exports.resetPassword = async (req, res) => {
         message: "Password not matching",
       });
     }
-    const userDetails = User.find({ token: token });
+    const userDetails = Users.find({ token: token });
     if (!userDetails) {
       return res.json({
         success: false,
